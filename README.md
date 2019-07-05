@@ -1,4 +1,5 @@
-################################  N8UR ASHCOMM  ################################
+
+#################################  ashcomm.py  #################################
 
 Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 Version number can be found in the ashglobal.py file
@@ -16,7 +17,7 @@ Software to communicate with Ashtech GPS receivers via serial port.
 
 ################################################################################
 
-ASHCOMM is a program to collect data from Ashtech Z12 and micro-Z GPS
+ashcomm.py is a program to collect data from Ashtech Z12 and micro-Z GPS
 receivers and generate reports in RINEX 2.11 format that can be post-
 processed to determine precise location and timing information.
 
