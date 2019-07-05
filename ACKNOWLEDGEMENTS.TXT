@@ -1,0 +1,26 @@
+################################  N8UR ASHCOMM  ################################
+#
+#	Concepts, algorithms, and a small bit of code shamelessly stolen from
+#	a number of other programs, including:
+#	
+#	Lady Heather -- Mark Sims
+#	http://www.ke5fx.com/heather
+#	NOTE: As of July, 2019, Ashtech support is only in the beta version.
+#
+#	remote33 -- published by Magellan Corporation/Ashtech Precision Products
+#	and downloaded from
+#	https://kb.unavco.org/kb/article/remote33-374.html
+#	NOTE: remote33 is written in a very early version of Perl and needs 
+#	updating to run on current machines.  That's largely why I wrote 
+#	this program.
+#
+#	sharc -- by Keith Stark and downloaded from
+#	http://kb.unavco.org/kb/assets/371/sharc-0.99.9-1.i386.rpm
+#	NOTE: sharc is written in a very early version of C++ and requires
+#	major work to run on current machines.  That's largely why I wrote
+#	this program.
+#
+#	The lat/long/height conversion routines are borrowed from:
+#	https://gist.github.com/govert/1b373696c9a27ff4c72a
+#	https://gist.github.com/sbarratt/a72bede917b482826192bf34f9ff5d0b
+################################################################################

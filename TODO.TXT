@@ -1,0 +1,12 @@
+To-do list for ashcomm.py:
+
+1.  Add more error checking and validation; the problem is I don't know
+where that's needed.
+
+2.  Test with Ashtech micro-Z reference station and make any additions
+required to support that radio.
+
+3.  Decode additional message types and generate more RINEX file types.
+
+4.  Make the GPS-week detection code more robust (relying on the DAL
+sentence isn't the best approach).
