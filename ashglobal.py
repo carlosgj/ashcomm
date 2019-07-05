@@ -24,7 +24,7 @@ import io
 import struct
 import math
 
-from ashmain import *
+from ashcomm import *
 from ashserial import *
 from ashcommand import *
 from ashutil import *
