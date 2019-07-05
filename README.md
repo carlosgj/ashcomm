@@ -26,11 +26,9 @@ libraries or modules that are not part of a standard Python distribution.
 There's no reason it shouldn't run on a Windows system that has Python3
 installed.
 
-ASHCOMM has a number of command line options, most of which are used to
+ashcomm.py has a number of command line options, most of which are used to
 populate the RINEX report header.  The "runash.sh" shell script
 includes them all and can be used as a template.
 
 To run the program, type "ashcomm.py" followed by the desired options, or
 use the runash.sh shell script after customizing it for your needs.
-
-
