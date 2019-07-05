@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-
-################################  N8UR ASHCOMM  ################################
+#################################  ashcomm.py  #################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
