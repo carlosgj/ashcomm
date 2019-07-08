@@ -33,10 +33,13 @@ Z12-REF reference station.  I have a micro-Z reference station and
 will try to test that soon.
 
 At present, the program is limited to streaming data from the receiver
-and converting it to RINEX output files.  I want to add the ability to
-download and manage files stored in the receiver.  That will take a bit
-more work because the Z12 and micro-Z have very different file systems
-(and my Z12 died last night -- but a replacement is on its way).
+and converting it to RINEX observation files.  I want to add the ability 
+to download and manage files stored in the receiver.  That will take a 
+bit more work because the Z12 and micro-Z have very different file 
+systems (and my Z12 died last night -- but a replacement is on its 
+way).  I might also look at adding RINEX navigation file output, but
+(a) I don't know anything about it; (b) it looks complicated; and
+(c) I'm not sure what I would use it for.
 
 ashcomm.py has a number of command line options, most of which are
 used to populate the RINEX report header.  At a minimum, you will
