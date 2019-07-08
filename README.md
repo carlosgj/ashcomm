@@ -22,9 +22,11 @@ receivers and generate reports in RINEX 2.11 format that can be post-
 processed to determine precise location and timing information.
 
 It is written in Python3 on a Linux platform.  It does not use any
-libraries or modules that are not part of a standard Python distribution.
-There's no reason it shouldn't run on a Windows system that has Python3
-installed.
+libraries or modules that are not part of a standard Python distribution,
+other than xmodem (install with "pip3 install xmodem") which is only
+needed for working with the receiver's internal file storage.  I haven't 
+tried it, but there's no reason ashtech.py shouldn't run on a Windows
+system that has Python3 installed.
 
 So far, I've tested the program on a standard Z12 receiver and on a
 Z12-REF reference station.  I have a micro-Z reference station and
@@ -33,11 +35,17 @@ will try to test that soon.
 At present, the program is limited to streaming data from the receiver
 and converting it to RINEX output files.  I want to add the ability to
 download and manage files stored in the receiver.  That will take a bit
-more work because the Z12 and micro-Z have very different file systems.
+more work because the Z12 and micro-Z have very different file systems
+(and my Z12 died last night -- but a replacement is on its way).
 
 ashcomm.py has a number of command line options, most of which are used to
 populate the RINEX report header.  The "runash.sh" shell script
-includes them all and can be used as a template.
+includes them all and can be used as a template.  At present, the
+RINEX file information (site name, project, etc.) are written to
+the RINEX file header, but not uploaded into the receiver.  e.g.,
+if you set the sitename via ashcomm.py command line, that name
+will be used by the program, but the receiver won't know about it.
+This may change.
 
 To run the program, type "ashcomm.py" followed by the desired options, or
 use the runash.sh shell script after customizing it for your needs.
