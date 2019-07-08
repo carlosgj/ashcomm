@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#################################  ashcomm.py  #################################
+################################  N8UR ASHCOMM  ################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
@@ -54,7 +54,7 @@ class Position:
 		(lat,lon,height) = self.ecef_to_wgs84(self.x,self.y,self.z)
 		lat = '{1:.{0}f}'.format(x_places,lat)
 		lon = '{1:.{0}f}'.format(y_places,lon)
-		height = '{1:.{0}f}'.format(z_places,height)
+		height = '{1:.{0}f}M'.format(z_places,height)
 
 		if quad:
 			if float(lat) > 0:
@@ -80,7 +80,7 @@ class Position:
 
 		lat = str(int(latdeg)) + ":" + '{1:.{0}f}'.format(x_places,latmin)
 		lon = str(int(londeg)) + ":" + '{1:.{0}f}'.format(y_places,lonmin)
-		height = '{1:.{0}f}'.format(z_places,height)
+		height = '{1:.{0}f}M'.format(z_places,height)
 
 		if quad:
 			if float(rawlat) > 0:
@@ -95,7 +95,7 @@ class Position:
 
 	def ddmmxxx_string(self):
 		(lat,lon,height) = self.ddmmxxx_string_list()
-		return lat + " " +lon + " " + height + "M"
+		return lat + " " +lon + " " + height
 
 	def ddmmssxxx_float_list(self):
 		(lat,lon,height) = self.ecef_to_wgs84(self.x,self.y,self.z)
@@ -113,7 +113,7 @@ class Position:
 			":" +'{1:.{0}f}'.format(x_places,latsec)
 		lon = str(int(londeg)) + ":" + str(int(lonmin)) + \
 			":" +'{1:.{0}f}'.format(y_places,lonsec)
-		height = '{1:.{0}f}'.format(z_places,height)
+		height = '{1:.{0}f}M'.format(z_places,height)
 
 		if quad:
 			if float(rawlat) > 0:

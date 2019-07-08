@@ -26,6 +26,15 @@ libraries or modules that are not part of a standard Python distribution.
 There's no reason it shouldn't run on a Windows system that has Python3
 installed.
 
+So far, I've tested the program on a standard Z12 receiver and on a
+Z12-REF reference station.  I have a micro-Z reference station and
+will try to test that soon.
+
+At present, the program is limited to streaming data from the receiver
+and converting it to RINEX output files.  I want to add the ability to
+download and manage files stored in the receiver.  That will take a bit
+more work because the Z12 and micro-Z have very different file systems.
+
 ashcomm.py has a number of command line options, most of which are used to
 populate the RINEX report header.  The "runash.sh" shell script
 includes them all and can be used as a template.

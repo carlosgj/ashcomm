@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#################################  ashcomm.py  #################################
+################################  N8UR ASHCOMM  ################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
@@ -89,14 +89,16 @@ class AshtechCommands:
 	def QueryRespond(self,command,length=0,verbose=False):
 
 		command_string_bytes = b"$PASHQ," + bytes(command,'ascii') + b"\r\n"
-		if verbose:
-			print("Query sent:",command_string_bytes)
-		
 		self.SerPort.reset_input()		# clear out garbage
+		self.SerPort.reset_output()		# clear out garbage
+		self.SerPort.flush()			# clear out garbage
+
 		self.SerPort.write(command_string_bytes)
 		time.sleep(0.1)
 
-		self.SerPort.serial.timeout = 10
+		if verbose:
+			print("Query sent:",command_string_bytes)
+		
 		response = b''
 		if length:			# get raw data of length bytes
 			while True:
@@ -122,9 +124,11 @@ class AshtechCommands:
 		response = self.QueryRespond("RID,A").split(',')
 		response = response[1:]
 		if verbose:
-			print("Receiver type: %s, option %s, firmware versions %s/%s"
+			# fields: 0 = rx type, 1 = channel option, 2 = nav version,
+			# 3 = options, 4 = channel version
+			print("Rx type: %s, options %s/%s, versions %s/%s"
 				% (str(response[0]),str(response[1]),
-				str(response[2]),str(response[4]))) # [3] is reserved
+				str(response[3]),str(response[2]),str(response[4])))
 		return response
 
 

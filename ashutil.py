@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#################################  ashcomm.py  #################################
+################################  N8UR ASHCOMM  ################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
@@ -197,5 +197,21 @@ def fixphase(phase_in,lli):
 			phase = 0.0
 			break
 	return phase,lli
+
+###############################################################################
+# Human_Bytes -- display number in human format
+# Based on humanbytes from petre on StackOverflow
+# https://stackoverflow.com/questions/12523586/ \
+# python-format-size-application-converting-b-to-kb-mb-gb-tb/37423778
+###############################################################################
+def Human_Bytes(i, binary=False, precision=2):
+# usage: print(f"{i} == {Human_bytes(i)}, {Human bytes(i, binary=True)}")
+	MULTIPLES = ["B", "k{}B", "M{}B", "G{}B", "T{}B",
+		"P{}B", "E{}B", "Z{}B", "Y{}B"]
+	base = 1024 if binary else 1000
+	multiple = math.trunc(math.log2(i) / math.log2(base))
+	value = i / math.pow(base, multiple)
+	suffix = MULTIPLES[multiple].format("i" if binary else "")
+	return f"{value:.{precision}f}{suffix}"
 
 # end of ashutil.py

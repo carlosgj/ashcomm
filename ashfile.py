@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#################################  ashcomm.py  #################################
+################################  N8UR ASHCOMM  ################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
@@ -22,6 +22,16 @@ import serial
 import io
 import struct
 import math
+import argparse
+
+from ashserial import *
+from ashcommand import *
+from ashutil import *
+from ashmessage import *
+from ashposition import *
+from ashtime import *
+from ashrinex import *
+from ashglobal import *
 
 # pip install xmodem
 from xmodem import XMODEM, XMODEM1k, NAK
@@ -37,34 +47,7 @@ logging.basicConfig(level=logging.ERROR)
 ###############################################################################
 ###############################################################################
 
-###############################################################################
-# getc -- used by xmodem() for input
-###############################################################################
-	def getc(self,size, timeout=1):
-		return self.serial.read(size) or None
-
-###############################################################################
-# putc -- used by xmodem() for output
-###############################################################################
-	def putc(self,data, timeout=1):
-		self.serial.write(data)  # note that this ignores the timeout
-		time.sleep(0.1)
-
-###############################################################################
-# Human_Bytes -- display number in human format
-# Based on humanbytes from petre on StackOverflow
-# https://stackoverflow.com/questions/12523586/ \
-# python-format-size-application-converting-b-to-kb-mb-gb-tb/37423778
-###############################################################################
-	def Human_Bytes(self,i, binary=False, precision=2):
-	# usage: print(f"{i} == {Human_bytes(i)}, {Human bytes(i, binary=True)}")
-		MULTIPLES = ["B", "k{}B", "M{}B", "G{}B", "T{}B", 
-			"P{}B", "E{}B", "Z{}B", "Y{}B"]
-		base = 1024 if binary else 1000
-		multiple = math.trunc(math.log2(i) / math.log2(base))
-		value = i / math.pow(base, multiple)
-		suffix = MULTIPLES[multiple].format("i" if binary else "")
-		return f"{value:.{precision}f}{suffix}"
+class AshtechFile:
 
 ###############################################################################
 # ComposeRFileName -- build filename for downloaded file
@@ -208,20 +191,22 @@ logging.basicConfig(level=logging.ERROR)
 		FileInfoSize   = 40
 		FatInfoSize    = MemInfoSize + FileInfoSize * MaxFileNumbers
 
+		modem = XMODEM1k(self.Serial.getc, self.Serial.putc)
+		self.Serial.timeout = 0
 		# Download FAT to buffer
-		modem = XMODEM1k(self.getc, self.putc)
-		QueryString = str.encode("$PASHQ,BLK,%X,%X\n\r" % (0,FatInfoSize*2))
-		self.serial.timeout = 0
+		Query= b"BLK,%X,%X" % (0,FatInfoSize*2)
+		self.Commands.QueryCommand(Query,verbose=True)
+		time.sleep(1)
+
 		print("Requesting FAT Download...")
-		self.serial.write(QueryString)
-		buffer = open('data', 'wb')
-		print("Bytes received: ",modem.recv(buffer,crc_mode=1))
-		buffer.close
-		self.serial.timeout = self.TIMEOUT
+		mybuf = open('data', 'wb')
+		print("Bytes received: ",modem.recv(mybuf))
+		mybuf.close
 
 		# Now read and process FAT
-		buffer = open('data',"rb")
-		buf = buffer.read(20)
+		mybuf = open('data',"rb")
+		buf = mybuf.read(20)
+
 		MemHeader = struct.unpack(">10H",buf)
 		FilesFound = MemHeader[9] # decrement by one for current file
 		print("Files Found (less current): ",FilesFound)
@@ -270,4 +255,72 @@ logging.basicConfig(level=logging.ERROR)
 			
 			buffer.close
 			return()
+
+###############################################################################
+# getargs -- get command line arguments and supply defaults
+###############################################################################
+	def getargs(self):
+		args = argparse.ArgumentParser()
+
+		def str2bool(v):
+			if isinstance(v, bool):
+				return v
+			if v.lower() in ('yes', 'true', 't', 'y', '1'):
+				return True
+			elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+				return False
+			else:
+				raise argparse.ArgumentTypeError('Boolean value expected.')
+
+		# setup options with defaults
+		args.add_argument('-v','--verbose', default='False',type=str2bool,
+			nargs='?',const=True,help='be verbose')
+
+		args.add_argument('-s','--serport', default='/dev/ttyS4',type=str,
+			help='host computer serial port')
+		args.add_argument('-b','--baud', default=115200,type=int,
+			help='baud rate')
+		args.add_argument('-p','--hwport', default='A',type=str,
+			help='receiver hardware port')
+
+		self.Globals.opts = vars(args.parse_args())
+
+# MAIN PROGRAM
+###############################################################################
+if __name__ == '__main__':
+#	original_sigint = signal.getsignal(signal.SIGINT)
+#	signal.signal(signal.SIGINT, exit_handler)
+
+	import subprocess
+
+	def main():
+		RX = AshtechFile()
+		RX.Globals = AshtechGlobals()
+		RX.getargs()
+		verbose = RX.Globals.opts['verbose']
+		if verbose:
+			print("Verbose mode")
+
+		RX.Serial = AshtechSerial(RX.Globals.opts['serport'],
+			RX.Globals.opts['baud'],RX.Globals.opts['hwport'],verbose)
+		RX.Commands = AshtechCommands(RX.Serial,verbose)
+
+		RX.Serial.Open()
+		time.sleep(1)
+		RX.Commands.QueryRID(verbose=True)
+
+		# shut off streaming output
+		RX.Commands.SetCommand("OUT,A")
+		time.sleep(1)
+		RX.Serial.reset_output()
+		RX.Serial.flush()
+		RX.Commands.QueryRID(verbose=True)
+		time.sleep(1)
+
+		RX.GetZ12Files()
+		time.sleep(1)
+
+		RX.Serial.Close()
+
+	main()
 

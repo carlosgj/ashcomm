@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#################################  ashcomm.py  #################################
+################################  N8UR ASHCOMM  ################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
@@ -226,6 +226,13 @@ class AshtechSerial:
 		return message
 
 ###############################################################################
+# getc -- used by xmodem() for input
+###############################################################################
+	def getc(self,size, timeout=1):
+		data = self.serial.read(size)
+		return data or None
+
+###############################################################################
 # write -- serial write function. Takes a byte object or an ASCII  string 
 # (which it converts to bytes before writing).  Returns the number of
 # bytes written or -1 if write fails.
@@ -241,5 +248,12 @@ class AshtechSerial:
 			return -1
 			self.flush()
 		return numbytes
+
+###############################################################################
+# putc -- used by xmodem() for output
+###############################################################################
+	def putc(self,data, timeout=1):
+		time.sleep(0.01)
+		return self.serial.write(data)  # note that this ignores the timeout
 
 # end of ashserial.py

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-#################################  ashcomm.py  #################################
+
+################################  N8UR ASHCOMM  ################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
@@ -74,14 +75,16 @@ class Rinex:
 # create_rinex_obs_file -- use name if provided, otherwise build it up
 ###############################################################################
 	def create_rinex_obs_file(self):
+		clean_name = ''
 		if self.Globals.opts['rinex_file']:
 			filename = self.Globals.opts['rinex_file']
 			for c in filename:
 				if c.isalnum() or c in [' ','.','/']:
 					clean_name = clean_name + c
 			while clean_name.count("../"):
+				# don't let us go upstairs
 				clean_name = clean_name.replace("../","./")
-				# Get rid of leading "./" combinations...
+				# get rid of leading "./" combinations...
 				clean_name = clean_name.lstrip("./")
 			if filename != clean_name:
 				print("changed requested file name",filename,"to:",clean_name)
@@ -89,8 +92,12 @@ class Rinex:
 		else:
 			if self.Globals.opts['site_name']:
 				sitename = self.Globals.opts['site_name']
+				for c in sitename:
+					if c.isalnum() or c in [' ','.','/']:
+						clean_name = clean_name + c
+				sitename = clean_name
 			else:
-				sitename = "none"
+				sitename = "NONE"
 			yday = str(datetime.datetime.utcnow().timetuple().tm_yday)
 			hour = int(datetime.datetime.utcnow().timetuple().tm_hour)
 			hour_letter = chr(ord('a') + hour)
@@ -99,12 +106,17 @@ class Rinex:
 			obs_filename = sitename + yday + hour_letter + "." + year + "o"	
 			self.Globals.obs_filename = obs_filename
 
+			print()
 			print("Attempting to create RINEX observations file:",obs_filename)
 
 			if os.path.isfile(obs_filename):
 				print(obs_filename,
-					"already exists!  Exiting so you can try again...")
-				sys.exit(1)
+					"already exists!  Do you want to overwrite? (y/n):",end='')
+				if input().lower().startswith('y'):
+					os.remove(obs_filename)
+				else:
+					print("Exiting so you can try again...")	
+					sys.exit(1)
 			try:
 				# Here we just create the file; we'll write to it elsewhere
 				open(obs_filename,'x').close()
@@ -144,10 +156,12 @@ class Rinex:
 		header.append(string)
 
 		# Receiver Info
-		(rxtype,chopt,navver,chver,chksum) = self.Commands.QueryRID()
+		(rx_type,ch_opt,nav_ver,opts,ch_ver) = self.Commands.QueryRID()
+		rxtype = "{} OPT: {}/{}".format(rx_type,ch_opt,opts)
+		version = "VERS: {}/{}".format(nav_ver,ch_ver)
 		string = "{:<20}{:<20}{:<20}{:<20}".format(
-			self.Globals.opts['rx_number'],rxtype + " opt:" + chopt,
-				navver + " " + chver,"REC # / TYPE / VERS")
+			self.Globals.opts['rx_number'],rxtype,version,
+				"REC # / TYPE / VERS")
 		header.append(string)
 
 		# Antenna info			
@@ -177,10 +191,6 @@ class Rinex:
 
 		string = "{:6d}{:6d}{:6s}{:<42}{:<20}".format(
 			1,1,"","","WAVELENGTH FACT L1/2")
-		header.append(string)
-
-		string = "{:<60}{:<20}".format("SNR RANGE DOESN'T MATCH Z12 DOCS",
-			"COMMENT")
 		header.append(string)
 
 		string = "{:6d}{:<54}{:<20}".format(

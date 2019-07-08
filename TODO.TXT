@@ -10,3 +10,20 @@ required to support that radio.
 
 4.  Make the GPS-week detection code more robust (relying on the DAL
 sentence isn't the best approach).
+
+5.  Support file download and management.  The Z12 and micro-Z have
+different filesystems so this will take a bit of work.  The "ashfile.py"
+file contains the work I've done on it so far.  It previously was able
+to download files from a Z12 but with all the changes I've made to the
+supporting code, the download function (via xmodem!) doesn't currently
+work.  Next step is to fix that.
+
+6.  In connection with that, Ashtech/Magellan published a program written
+in Perl called "remote33" that included a C++ program called "convert"
+that would read receiver output files and convert them to a format that 
+could then be converted to RINEX by the "teqc" software.  That is an
+awfully clunky process, so I want to combine everything into one program
+As a baby step, I've updated the "convert" program to compile on a modern
+Linux system, and also fix the GPS week rollover problem.  After I have
+a chance to test it, I will add "convert" to this repo for what it might
+be worth

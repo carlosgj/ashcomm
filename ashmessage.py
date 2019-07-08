@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#################################  ashcomm.py  #################################
+################################  N8UR ASHCOMM  ################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
@@ -87,11 +87,12 @@ class AshtechMessages:
 
 				# send an epoch stanza to the RINEX output only if
 				# we've received both MBN and PBN messages.  also
-				# test to make sure we have week and tow
+				# test to make sure we have week, tow, and fix
 			if self.Globals.got_first_mben and \
 				self.Globals.got_first_pben and \
 				self.Globals.gps_week and \
-				self.Globals.gps_tow:
+				self.Globals.gps_tow and \
+				self.Globals.current_fix:
 
 				# and only if we've gotten a full stanza
 				if self.Globals.mben_list_full:
@@ -365,34 +366,44 @@ class AshtechMessages:
 			print("Getting GPS week number...")
 
 		# in theory, we should be able to do $PASHQ,DAL,A to get one 
-		# sentence, but that doesn't work.  So instead we start streaming 
-		# the sentence then stop after we get one
+		# sentence, but that doesn't work, at least on my Z12.
+		# So instead we start streaming the sentence then stop 
+		# after we get one.
 
 		# enable NMEA output
 		self.Commands.SetCommand("OUT,A,NMEA")
-		time.sleep(0.1)
+		time.sleep(1)
 
 		# set sentence rate to every 20 seconds, so we
 		# have time to turn it off before getting flooded
 		self.Commands.SetCommand("NME,PER,20")
-		time.sleep(0.1)
+		time.sleep(1)
 
 		# start streaming DAL sentence
 		self.Commands.SetCommand("NME,DAL,A,ON")
-		time.sleep(0.1)
+		time.sleep(1)
+
+		self.SerPort.reset_input()		# clear out garbage
 
 		gps_week = 0
-		self.SerPort.reset_input()		# clear out garbage
+		messasge = b''
 		while not gps_week:
 			# get one sentence
+			time.sleep(0.1)
 			message = self.SerPort.read_line()
-			response = message.split(b',')
+			if message:
+				response = message.split(b',')
 
-			# Wn is contained in field 14 before "*" and checksum
-			gps_week,_ = response[13].split(b'*')
+				# Wn is contained in field 13 before "*" and checksum,
+				# except some receivers don't include the checksum
+				if b"*" in response[13]:
+					gps_week,_ = response[13].split(b'*')
+				else:
+					gps_week = response[13]
 
 		# turn off NMEA sentences
 		self.Commands.SetCommand("NME,ALL,A,OFF")
+		self.SerPort.reset_input()		# clear out leftovers
 
 		if verbose:
 			print("Raw GPS week:",gps_week)

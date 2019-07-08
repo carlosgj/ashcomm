@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#################################  ashcomm.py  #################################
+################################  N8UR ASHCOMM  ################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
@@ -136,6 +136,7 @@ class AshtechReceiver:
 # MAIN PROGRAM
 ###############################################################################
 if __name__ == '__main__':
+	# for graceful ctrl-C handling
 	original_sigint = signal.getsignal(signal.SIGINT)
 	signal.signal(signal.SIGINT, exit_handler)
 	
@@ -158,18 +159,21 @@ if __name__ == '__main__':
 			RX.Globals,RX.RINEX,verbose)
 
 		RX.Serial.Open()
-		RX.Globals.start_time = current_gps_time() # make GPS time
+		RX.Globals.start_time = current_gps_time()	# make GPS time
 
-		RX.Commands.SetCommand("OUT,A",verbose=0)			# turn off output
-		time.sleep(0.5)
-		RX.Commands.SetCommand("NME,ALL,A,OFF",verbose=0)	# turn off NMEA
-		time.sleep(0.5)
+		RX.Commands.SetCommand("OUT,A",verbose=0)	# turn off output
+		RX.Serial.reset_input()						# clean the sluices
+		RX.Serial.reset_output()
+		time.sleep(1)
 
 		RX.Commands.QueryRID(verbose=True)
 
 #		RX.GetZ12Files()
 		
 		RX.RINEX.create_rinex_obs_file()
+
+		print()
+		print("Waiting for data; it may take a bit...")
 
 		RX.gps_week = RX.Messages.GetGPSWeek(verbose)
 		time.sleep(1)

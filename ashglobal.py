@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#################################  ashcomm.py  #################################
+################################  N8UR ASHCOMM  ################################
 #
 #	Copyright 2019 by John Ackermann, N8UR jra@febo.com https://febo.com
 #	Version number can be found in the ashglobal.py file
@@ -24,7 +24,7 @@ import io
 import struct
 import math
 
-from ashcomm import *
+from ashglobal import *
 from ashserial import *
 from ashcommand import *
 from ashutil import *
@@ -101,13 +101,13 @@ class AshtechGlobals:
 	mben_keys = [
 		'seq','struct_left','prn','el','az','ch_id',
 
-		'ca_warn','ca_goodbad','ca_set5','ca_snr','ca_spare',
+		'ca_warn','ca_goodbad','ca_spare','ca_snr','ca_qual',
 		'ca_phase','ca_range','ca_dopp','ca_correction',
 
-		'l1_warn','l1_goodbad','l1_set5','l1_snr','l1_spare',
+		'l1_warn','l1_goodbad','l1_spare','l1_snr','l1_qual',
 		'l1_phase','l1_range','l1_dopp','l1_correction',
 
-		'l2_warn','l2_goodbad','l2_set5','l2_snr','l2_spare',
+		'l2_warn','l2_goodbad','l2_spare','l2_snr','l2_qual',
 		'l2_phase','l2_range','l2_dopp','l1_correction']
 
 		
@@ -145,15 +145,13 @@ class AshtechGlobals:
 
 	got_first_pben = False						# did we get the first epoch?
 	current_pben = dict.fromkeys(pben_keys,None)	# make empty dict
-	current_fix = [None]
+	current_fix = [None]						# 
 
 	# this contains all the data for one epoch
 	epoch_data = [mben_list,current_pben]
 
 ###############################################################################
 # time stuff
-
-	current_fix = Position(0,0,0) 				# set in parse_pben()
 	current_epoch = GPS_Time(0,0).timelist		# set in parse_pben()
 	first_observation = GPS_Time(0,0).timelist	# set in parse_pben()
 	first_observation_string = ""				# set in parse_pben()
