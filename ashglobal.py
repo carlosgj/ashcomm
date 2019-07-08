@@ -48,7 +48,7 @@ class AshtechGlobals:
 	PROG_NAME = "N8UR_AshComms"
 
 	# version number
-	VER_NUM = "2019.07.04A"
+	VER_NUM = "2019.07.08A"
 
 	# gps_week is greater than:
 	ROLLOVER = 2048
