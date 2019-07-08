@@ -131,6 +131,7 @@ class Rinex:
 ###############################################################################
 	def obs_file_header(self):
 		
+		print()
 		print("Writing RINEX observations file header...")
 
 		# column count starts with 1.  header ID is columns 61-80
