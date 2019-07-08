@@ -38,14 +38,31 @@ download and manage files stored in the receiver.  That will take a bit
 more work because the Z12 and micro-Z have very different file systems
 (and my Z12 died last night -- but a replacement is on its way).
 
-ashcomm.py has a number of command line options, most of which are used to
-populate the RINEX report header.  The "runash.sh" shell script
-includes them all and can be used as a template.  At present, the
-RINEX file information (site name, project, etc.) are written to
-the RINEX file header, but not uploaded into the receiver.  e.g.,
-if you set the sitename via ashcomm.py command line, that name
-will be used by the program, but the receiver won't know about it.
-This may change.
+ashcomm.py has a number of command line options, most of which are
+used to populate the RINEX report header.  At a minimum, you will
+need to specify the serial port (e.g., for Linux, "/dev/tytS0"),
+and the baud rate.  To run the program, type "ashcomm.py" followed 
+by the desired options
 
-To run the program, type "ashcomm.py" followed by the desired options, or
-use the runash.sh shell script after customizing it for your needs.
+The proviced "runash.sh" shell script runs the program, including all
+the available options (with mainly made-up values); it can be used as 
+a template for your needs.  Options setting RINEX data fields (site 
+name, project, etc.) are written to the RINEX file header, but not 
+uploaded into the receiver.  e.g., if you set the site name via 
+ashcomm.py command line, that name will be used by the program, 
+but the receiver won't know about it.  This may change.
+
+There is a command-line option for the name of the output file.  If it
+is set, that name will be used after deleting any illegal characters.
+If the file name is not set, ashcomm will build one in the recommended 
+format from the 4-character site name, the day of the year, and the 
+hour.  If the site name is not provided, it is set to "NONE" and that 
+is used in the file name.  If the program is about to overwrite an 
+existing file, you will be warned and given an opportunity to bail out 
+before doing any damage.
+
+The program writes a few lines of information to STDOUT and provides an
+ever-growing line of dots to show progress.  Setting the verbose option
+causes a bunch of debugging information to be printed to STDOUT, most of
+which is variable printouts that I used for debugging.
+
