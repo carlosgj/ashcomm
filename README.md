@@ -47,7 +47,7 @@ need to specify the serial port (e.g., for Linux, "/dev/tytS0"),
 and the baud rate.  To run the program, type "ashcomm.py" followed 
 by the desired options
 
-The proviced "runash.sh" shell script runs the program, including all
+The provided "runash.sh" shell script runs the program, including all
 the available options (with mainly made-up values); it can be used as 
 a template for your needs.  Options setting RINEX data fields (site 
 name, project, etc.) are written to the RINEX file header, but not 
