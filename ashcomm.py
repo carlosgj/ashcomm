@@ -36,27 +36,9 @@ from ashrinex import *
 from ashglobal import *
 
 ###############################################################################
-# exit_handler -- grab CTRL+C and exit gracefully
-###############################################################################
-def exit_handler(signum, frame):
-    # restore the original signal handler
-	signal.signal(signal.SIGINT, original_sigint)
-	print()
-	sys.exit(1)
-#	try:
-#		if input("\nReally quit? (y/n)> ").lower().startswith('y'):
-#			sys.exit(1)
-#	except KeyboardInterrupt:
-#		print("Ok ok, quitting")
-#		sys.exit(1)
-
-	# restore the exit gracefully handler here    
-	signal.signal(signal.SIGINT, exit_handler)
-
-###############################################################################
 class AshtechReceiver:
 
-###############################################################################
+
 ###############################################################################
 	def __init__(self):
 		pass
@@ -132,19 +114,55 @@ class AshtechReceiver:
 
 		return
 
+	###################################################################
+	# stats -- prints session details for the exit handler
+	###################################################################
+	def stats(self):
+		print()
+		print("Exiting program...")
+		if self.Globals.start_time:
+			duration = datetime.datetime.utcnow() - \
+				self.Globals.start_time
+			print("Run time: {}".format((str(duration))[:-5],end=''),end='')
+			if self.Globals.obs_epoch_count:
+				print("; wrote {} epochs to {}".format(
+					self.Globals.obs_epoch_count,
+					self.Globals.obs_filename))
+			else:
+				print()
+
 ###############################################################################
 # MAIN PROGRAM
 ###############################################################################
 if __name__ == '__main__':
-	# for graceful ctrl-C handling
-	original_sigint = signal.getsignal(signal.SIGINT)
-	signal.signal(signal.SIGINT, exit_handler)
-	
 	import subprocess
 
 	def main():
 		RX = AshtechReceiver()
 		RX.Globals = AshtechGlobals()
+		#######################################################################
+		# exit_handler -- grab CTRL+C and exit gracefully
+		#######################################################################
+		def exit_handler(signum, frame):
+			# restore the original signal handler
+			signal.signal(signal.SIGINT, original_sigint)
+			RX.stats()
+			sys.exit(1)
+			try:
+				if input("\nReally quit? (y/n)> ").lower().startswith('y'):
+					sys.exit(1)
+			except KeyboardInterrupt:
+				RX.stats()
+				sys.exit(1)
+
+		# restore the exit gracefully handler here    
+		signal.signal(signal.SIGINT, exit_handler)
+	#######################################################################
+
+		# store the original SIGINT handler
+		original_sigint = signal.getsignal(signal.SIGINT)
+		signal.signal(signal.SIGINT, exit_handler)
+
 		RX.getargs()
 		verbose = RX.Globals.opts['verbose']
 		if verbose:
@@ -159,7 +177,6 @@ if __name__ == '__main__':
 			RX.Globals,RX.RINEX,verbose)
 
 		RX.Serial.Open()
-		RX.Globals.start_time = current_gps_time()	# make GPS time
 
 		RX.Commands.SetCommand("OUT,A",verbose=0)	# turn off output
 		RX.Serial.reset_input()						# clean the sluices
@@ -169,10 +186,10 @@ if __name__ == '__main__':
 		RX.Commands.QueryRID(verbose=True)
 
 #		RX.GetZ12Files()
-		
+
+		RX.Globals.start_time = datetime.datetime.utcnow()
 		RX.RINEX.create_rinex_obs_file()
 
-		print()
 		print("Waiting for data; it may take a bit...")
 
 		RX.gps_week = RX.Messages.GetGPSWeek(verbose)
@@ -187,5 +204,4 @@ if __name__ == '__main__':
 		time.sleep(1)
 		RX.Serial.Close()
 
-	main()
-
+main()

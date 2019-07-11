@@ -19,7 +19,7 @@
 
 ./ashcomm.py \
 --serport=/dev/ttyS4 \
---baud=115200 \
+--baud=9600 \
 --msg_rate=30 \
 --site=N8UR \
 --operator='John Ackermann' \

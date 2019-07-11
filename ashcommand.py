@@ -123,6 +123,9 @@ class AshtechCommands:
 	def QueryRID(self,verbose=False):
 		response = self.QueryRespond("RID,A").split(',')
 		response = response[1:]
+
+		# sometimes there's a checksum, sometimes there isn't
+		response[4] = response[4].split('*',1)[0]
 		if verbose:
 			# fields: 0 = rx type, 1 = channel option, 2 = nav version,
 			# 3 = options, 4 = channel version

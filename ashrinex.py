@@ -70,6 +70,7 @@ class Rinex:
 
 		self.obs_epoch_header(verbose)
 		self.obs_epoch(verbose)
+		self.Globals.obs_epoch_count += 1	
 
 ###############################################################################
 # create_rinex_obs_file -- use name if provided, otherwise build it up
@@ -132,7 +133,7 @@ class Rinex:
 	def obs_file_header(self):
 		
 		print()
-		print("Writing RINEX observations file header...")
+		print("Writing RINEX observation file header...")
 
 		# column count starts with 1.  header ID is columns 61-80
 		# print(self.ruler)

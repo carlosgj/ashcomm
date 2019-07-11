@@ -155,7 +155,10 @@ class AshtechGlobals:
 	current_epoch = GPS_Time(0,0).timelist		# set in parse_pben()
 	first_observation = GPS_Time(0,0).timelist	# set in parse_pben()
 	first_observation_string = ""				# set in parse_pben()
-	start_time = 0								# set in main()
+	
+	# these have to be available in the exit hanlder. how???
+	start_time = None							# set in main()
+	obs_epoch_count = 0							# set in write_obs_epoch()
 
 	# for convenience, week and current tow are kept in separate variables
 	gps_week = 0		# set in get_gps_week()	
