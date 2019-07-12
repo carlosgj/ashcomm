@@ -25,6 +25,7 @@ import struct
 import math
 
 from ashserial import *
+from ashglobal import *
 from ashutil import *
 from ashmessage import *
 from ashposition import *
@@ -34,8 +35,9 @@ class AshtechCommands:
 
 ###############################################################################
 ###############################################################################
-	def __init__(self,serport,verbose):
+	def __init__(self,serport,g,verbose):
 		self.SerPort = serport
+		self.Globals = g			# globals with lower case j is reserved
 		self.verbose = verbose
 
 ###############################################################################
@@ -52,7 +54,7 @@ class AshtechCommands:
 # QueryCommand -- send $PASHQ query command to Z12; don't wait for response
 ###############################################################################
 	def QueryCommand(self,command,verbose=False):
-		command_string_bytes = b"$PASHQ," + command + b"\r\n"
+		command_string_bytes = b"$PASHQ," + bytes(command,'ascii') + b"\r\n"
 		if verbose:
 			print("QueryCommand sent: ",command_string_bytes)
 		self.SerPort.write(command_string_bytes)
@@ -126,12 +128,32 @@ class AshtechCommands:
 
 		# sometimes there's a checksum, sometimes there isn't
 		response[4] = response[4].split('*',1)[0]
+		
+		self.Globals.rx_type = response[0]
+
+		# uZ has "SID" command to return serial number.  But it does it
+		# with two lines (dummy date field, then SN) so simple query
+		# won't work
+		if response[0] == "UZ":
+			self.QueryCommand("SID")
+			date = self.SerPort.read_line()
+			ser_num = self.SerPort.read_line()
+			ser_num = ser_num.decode('ascii')
+			response.append(ser_num)
+			self.Globals.rx_ser_num = ser_num
+
 		if verbose:
 			# fields: 0 = rx type, 1 = channel option, 2 = nav version,
 			# 3 = options, 4 = channel version
-			print("Rx type: %s, options %s/%s, versions %s/%s"
-				% (str(response[0]),str(response[1]),
-				str(response[3]),str(response[2]),str(response[4])))
+			string = "Rx type: {} ".format(str(response[0]))
+			if ser_num:
+				string += "SN: {} ".format(str(ser_num))
+			string += "Options: {}/{} ".format(
+				str(response[1]),str(response[3]))
+			string += "Versions: {}/{}".format(
+				str(response[2]),str(response[4]))
+			print(string)
+			
 		return response
 
 

@@ -47,14 +47,16 @@ class GPS_Time:
 		elapsed = datetime.timedelta(days = (week*7),
 			seconds = tow) # Use GPS time; no leapseconds
 
-		# Returns: (sec,min,hour,mday,mon,year,weeknum,yday)
 		# sticks object in self.gpstime for other formatting
 		self.gpstime = datetime.datetime.strftime(
 			epoch + elapsed,datetimeformat)
 		gpstimelist = list(self.gpstime.split(','))
+
 		# also make a pretty string version
 		self.gpstimestring = datetime.datetime.strftime(
 			epoch + elapsed,datetime_input_format).strip()
+
+		# Returns: (sec,min,hour,mday,mon,year,weeknum,yday)
 		return gpstimelist
 
 ###############################################################################
@@ -92,9 +94,15 @@ class GPS_Time:
 
 		# convert seq (50ms modulo 30 minutes) to seconds
 		seq_seconds = int(seq * 0.05)
-		# truncate tow to last 30 minute interval
+
+		# divide tow by 1800 seconds (30 minutes) to
+		# get number of 30 minute chunks so far this week
 		(quotient,remainder) = divmod(tow,1800)
+
+		# multiply 30 minutes of seconds by number of chunks
+		# to give us tow to prior 30 minute point
 		trunc_seconds = quotient * 1800
+		# add seq_seconds to get epoch time
 		seq_seconds = trunc_seconds + seq_seconds
 
 		return seq_seconds

@@ -85,25 +85,32 @@ class AshtechMessages:
 				elif msg_type == 'DAL':	pass # not processed here
 				else: print("Message type",msg_type,"is unknown!")
 
-				# send an epoch stanza to the RINEX output only if
-				# we've received both MBN and PBN messages.  also
-				# test to make sure we have week, tow, and fix
-			if self.Globals.got_first_mben and \
-				self.Globals.got_first_pben and \
-				self.Globals.gps_week and \
-				self.Globals.gps_tow and \
-				self.Globals.current_fix:
-
-				# and only if we've gotten a full stanza
-				if self.Globals.mben_list_full:
-					if verbose:
-						print("Off to RINEX...")
-					self.RINEX.write_rinex_obs()
-					# clear the mben list
-					self.Globals.mben_list = [None] * 33 # 1 - 32
-					self.Globals.mben_list_full = False
-					# clear tow since it's now in the past
-					self.Globals.gps_tow = 0
+			# send an epoch stanza to RINEX output only if
+			# mben_list_full avoids processing during the 
+			# multi-message mben stream; comparing epochs makes
+			# sure the mben and pben messages are in sync (for
+			# each epoch, mben messages arrive first, followed by
+			# the pben message. Checking that the mben and pben
+			# messages have the same epoch avoids mismatching
+			# RINEX headers and data. The checks for "got_first" are
+			# to avoid attribute errors if the time objects are
+			# empty.
+			if (
+				self.Globals.mben_list_full and
+				self.Globals.got_first_mben and
+				self.Globals.got_first_pben and
+				self.Globals.current_mben_epoch.timestring() ==
+					self.Globals.current_pben_epoch.timestring()
+				):
+	
+				if verbose:
+					print("Off to RINEX...")
+				self.RINEX.write_rinex_obs()
+				# clear the mben list
+				self.Globals.mben_list = [None] * 33 # 1 - 32
+				self.Globals.mben_list_full = False
+				# clear tow since it's now in the past
+				self.Globals.gps_tow = 0
 
 		return 
 
@@ -137,10 +144,12 @@ class AshtechMessages:
 
 		# convert "seq" (unit: 50ms modulo 30 minutes) to real time
 		seq = int(mben_dict['seq'])
-		seq_tmp = GPS_Time(self.Globals.gps_week,self.Globals.gps_tow)
-		seq_seconds = seq_tmp.time_from_seq(self.Globals.gps_week,
+		# get current gps time (set by pben)
+		temp = GPS_Time(self.Globals.gps_week,self.Globals.gps_tow)
+		seq_seconds = temp.time_from_seq(self.Globals.gps_week,
 			self.Globals.gps_tow,seq)
 		epoch = GPS_Time(self.Globals.gps_week,seq_seconds)
+		self.Globals.current_mben_epoch = epoch
 
 		# convert values (formulas from Lady Heather -- thanks, Mark!)
 		mben_dict['az'] = mben_dict['az'] * 2
@@ -264,14 +273,13 @@ class AshtechMessages:
 		pben_dict['tow'] =  pben_dict['tow'] / 1000.0
 		pben_dict['site'] = pben_dict['site'].decode('ascii')
 		pben_dict['pdop'] = pben_dict['pdop'] / 100.0	
+		self.Globals.current_pben = pben_dict
 
 		fix = Position(pben_dict['navx'],pben_dict['navy'],pben_dict['navz'])
 		self.Globals.current_fix = fix
 
-		self.Globals.current_pben = pben_dict
 		self.Globals.gps_tow = pben_dict['tow']
-
-		self.Globals.current_epoch = \
+		self.Globals.current_pben_epoch = \
 			GPS_Time(self.Globals.gps_week,self.Globals.gps_tow)
 
 		self.Globals.current_epoch_string = \
@@ -279,7 +287,7 @@ class AshtechMessages:
 
 		if not self.Globals.got_first_pben:
 			self.Globals.first_observation = \
-				self.Globals.current_epoch
+				self.Globals.current_pben_epoch
 			self.Globals.first_observation_string = \
 				self.Globals.current_epoch_string
 
@@ -364,6 +372,17 @@ class AshtechMessages:
 		
 		if verbose:
 			print("Getting GPS week number...")
+
+		# uZ has a "GPS Week" command so use it if we can
+		if self.Globals.rx_type == "UZ":
+			gps_week = self.Commands.QueryRespond("WKN")
+			gps_week = gps_week.split(',')[1]
+			gps_week = gps_week.split('*',1)[0]
+
+			#correct for epoch
+			gps_week = fix_rollover(gps_week)
+			self.Globals.gps_week = gps_week
+			return gps_week
 
 		# in theory, we should be able to do $PASHQ,DAL,A to get one 
 		# sentence, but that doesn't work, at least on my Z12.

@@ -28,9 +28,8 @@ needed for working with the receiver's internal file storage.  I haven't
 tried it, but there's no reason ashtech.py shouldn't run on a Windows
 system that has Python3 installed.
 
-So far, I've tested the program on a standard Z12 receiver and on a
-Z12-REF reference station.  I have a micro-Z reference station and
-will try to test that soon.
+So far, I've tested the program on a standard Z12 receiver, a
+Z12-REF reference station, and a micro-Z reference station.
 
 At present, the program is limited to streaming data from the receiver
 and converting it to RINEX observation files.  I want to add the ability 

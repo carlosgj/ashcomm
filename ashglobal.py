@@ -75,11 +75,14 @@ class AshtechGlobals:
 	# need to keep this current with actual options!
 	opt_keys = ['verbose','serport','baud','hwport','rinex_file',
 		'elmask','dopmask','site_name','project_name','msg_rate',
-		'operator','marker','marker_number','observer','agency',
-		'rx_number','antenna_number','antenna_type','antenna_height',
-		'antenna_east','antenna_north']
+		'operator','comment','marker','marker_number','observer',
+		'agency','rx_number','antenna_number','antenna_type',
+		'antenna_height','antenna_east','antenna_north']
 
 	opts = dict.fromkeys(opt_keys,None)	# make empty dict
+
+	rx_type = None					# set by QueryRID()
+	rx_ser_num = None				# set by QueryRID() if rx_type = "UZ"
 
 ###############################################################################
 # mben measurement has the key observation data.  There is one data dictionary
@@ -144,7 +147,7 @@ class AshtechGlobals:
 		'velx','vely','velz','drift','pdop']
 
 	got_first_pben = False						# did we get the first epoch?
-	current_pben = dict.fromkeys(pben_keys,None)	# make empty dict
+	current_pben = dict.fromkeys(pben_keys,None)# make empty dict
 	current_fix = [None]						# 
 
 	# this contains all the data for one epoch
@@ -152,9 +155,14 @@ class AshtechGlobals:
 
 ###############################################################################
 # time stuff
-	current_epoch = GPS_Time(0,0).timelist		# set in parse_pben()
 	first_observation = GPS_Time(0,0).timelist	# set in parse_pben()
 	first_observation_string = ""				# set in parse_pben()
+
+	current_epoch = GPS_Time(0,0).timelist		# set in parse_pben()
+
+	current_mben_epoch = GPS_Time(0,0).timelist	# set in parse_mben()
+	current_pben_epoch = GPS_Time(0,0).timelist	# set in parse_pben()
+
 	
 	# these have to be available in the exit hanlder. how???
 	start_time = None							# set in main()

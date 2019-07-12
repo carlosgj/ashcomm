@@ -83,18 +83,23 @@ class AshtechSerial:
 			print("Oops... error",sys.exc_info()[0],"occured.")
 			sys.exit(1)
 
-#		print("Trying to find hardware speed...",end=' ')
-#		rate = self.FindHardwareSpeed()
-#		print("detected baudrate: %s" % rate)
+		time.sleep(0.5)
+		print("Trying to find hardware speed...",end=' ')
+		rate = self.FindHardwareSpeed()
+		print("detected baudrate: %s" % rate)
 
-#		if int(rate) != int(self.ser_baud):
-#			print("Attempting to change speed to",self.ser_baud,"baud...")
-#			self.SetHardwareSpeed(self.ser_baud)
-#			rate = self.FindHardwareSpeed()
-#			if int(rate) == int(self.ser_baud):
-#				print("Set and confirmed requested speed: %s" % rate)
-#			else:
-#				print("Couldn't set new speed; staying at",rate)
+		if int(rate) != int(self.ser_baud):
+			print("Attempting to change speed to",self.ser_baud,"baud...")
+			self.SetHardwareSpeed(self.ser_baud)
+			time.sleep(0.5)
+			self.SetPortSpeed(self.ser_baud)
+			time.sleep(0.5)
+			rate = self.FindHardwareSpeed()
+			time.sleep(0.5)
+			if int(rate) == int(self.ser_baud):
+				print("Set and confirmed requested speed: %s" % rate)
+			else:
+				print("Couldn't set new speed; staying at",rate)
 
 		time.sleep(0.1)
 		self.reset_input()
@@ -109,38 +114,39 @@ class AshtechSerial:
 		self.serial.close()
 
 ###############################################################################
-# SetPortSpeed -- set computer port to desired speed
-###############################################################################
-	def SetPortSpeed(self,speed):
-		self.reset_input()
-		self.reset_output()
-		self.serial.baudrate = speed
-		self.serial.flush()
-		return
-
-###############################################################################
 # FindHardwareSpeed -- probe the Z12 for its current serial port speed
 ###############################################################################
 	def FindHardwareSpeed(self):
 		starting_index = len(self.BAUDRATES) - 1
 		index = starting_index
-
-		TEST_TIMEOUT = 1
-		self.serial.timeout = TEST_TIMEOUT
-
-		# clear out the sluices
-		self.reset_input()
-		self.reset_output()
+		TEST_TIMEOUT = 0.5
 
 		# Ashtech responses start with "$PASHR,"
 		look_for = b"$PASH"
+
+		# first see if we're already there
+		self.SetPortSpeed(self.ser_baud)
+		self.write("$PASHQ,PRT\r\n")
+		time.sleep(0.5)
+		response = self.read_anything('',16,TEST_TIMEOUT)
+		if look_for in response:
+			return self.ser_baud
+
+		# we weren't lucky, so step through rate table
 		while (index > 0):
 			rate = self.BAUDRATES[index]
+
+			# set host comm port speed
+			self.SetPortSpeed(rate)
+
+			# clear out the sluices
+			self.reset_output()
+			self.reset_input()
+
 			# send port query
-			time.sleep(0.5)
-			self.write("$PASHQ,PRT,A\r\n")
-			time.sleep(0.5)
-			response = self.read_anything('',16)
+			self.write("$PASHQ,PRT\r\n")
+			time.sleep(1)
+			response = self.serial.readline()
 			if look_for in response:
 				break
 			index -= 1
@@ -152,13 +158,22 @@ class AshtechSerial:
 		return rate
 
 ###############################################################################
+# SetPortSpeed -- set computer port to desired speed
+###############################################################################
+	def SetPortSpeed(self,speed):
+		self.reset_input()
+		self.reset_output()
+		self.serial.baudrate = speed
+		return
+
+###############################################################################
 # SetHardwareSpeed -- set Z12 hardware serial speed to requested baud rate
 ###############################################################################
 	def SetHardwareSpeed(self,speed):
 		do_checksum = False
 		index = self.SpeedToIndex(speed)
-		command = "SPD," + self.hw_port + "," + str(index)
-		result = self.Command.SetCommand(command,do_checksum) 
+		command = "$PASHS,SPD," + self.hw_port + "," + str(index) + "\r\n"
+		result = self.write(command) 
 
 ###############################################################################
 

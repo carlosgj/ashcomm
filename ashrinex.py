@@ -24,6 +24,7 @@ import serial
 import io
 import struct
 import math
+import getpass
 
 from ashserial import *
 from ashcommand import *
@@ -142,29 +143,51 @@ class Rinex:
 			" ","OBSERVATION","GPS ","RINEX VERSION / TYPE")
 		header.append(string)
 		date = datetime.date.today().strftime("%d %B %Y")
+
 		string = "{:<20}{:<20}{:<20}{:<20}".format(self.Globals.PROG_NAME,
 			self.Globals.opts['operator'],date,"PGM / RUN BY / DATE")
 		header.append(string)
-		string = "{:<60}{:<20}".format("Comment","COMMENT")
-		header.append(string)
+
+		if self.Globals.opts['comment']:
+			string = "{:<60}{:<20}".format("Comment","COMMENT")
+			header.append(string)
 		string = "{:<60}{:<20}".format(self.Globals.opts['marker'],
 			"MARKER NAME")
 		header.append(string)
 		string = "{:<60}{:<20}".format(self.Globals.opts['marker_number'],
 			"MARKER NUMBER")
 		header.append(string)
-		string = "{:<20}{:<40}{:<20}".format(self.Globals.opts['observer'],
+		# if not otherwise specified, get login name
+		if self.Globals.opts['observer']:
+			observer = self.Globals.opts['observer']
+		else:
+			observer = getpass.getuser()
+		string = "{:<20}{:<40}{:<20}".format(observer,
 			self.Globals.opts['agency'],"OBSERVER / AGENCY")
 		header.append(string)
 
 		# Receiver Info
-		(rx_type,ch_opt,nav_ver,opts,ch_ver) = self.Commands.QueryRID()
-		rxtype = "{} OPT: {}/{}".format(rx_type,ch_opt,opts)
-		version = "VERS: {}/{}".format(nav_ver,ch_ver)
+		(rx_type,ch_opt,nav_ver,opts,ch_ver,ser_num) = self.Commands.QueryRID()
+
+		# for receiver number, use in this priority: (1) opts[rx_number],
+		# (2) if uZ, receiver serial number; (3) "NONE"
+		if self.Globals.opts['rx_number']:
+			rx_number = self.Globals.opts['rx_number']
+		elif ser_num:
+			rx_number = ser_num
+		else:
+			rx_number = "NONE"
+
+		rxtype = "{} {}/{}".format(rx_type,ch_opt,opts)
+		version = "{}/{}".format(nav_ver,ch_ver)
 		string = "{:<20}{:<20}{:<20}{:<20}".format(
-			self.Globals.opts['rx_number'],rxtype,version,
-				"REC # / TYPE / VERS")
+			rx_number,rxtype,version,"REC # / TYPE / VERS")
 		header.append(string)
+
+		if self.Globals.rx_ser_num:
+			string = "{:<40}{:<20}{:<20}".format(
+				"SN: " + ser_num,"","COMMENT")
+			header.append(string)
 
 		# Antenna info			
 		string = "{:<20}{:<20}{:<20}{:<20}".format(

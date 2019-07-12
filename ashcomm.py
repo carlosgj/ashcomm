@@ -87,6 +87,8 @@ class AshtechReceiver:
 		# RINEX field options
 		args.add_argument('--operator', default = '',type=str,
 			help='operator name')
+		args.add_argument('--comment', default = '',type=str,
+			help='optional comment, max 60 characters')
 		args.add_argument('--marker', default = '',type=str,
 			help='marker name')
 		args.add_argument('--marker_number', default = '',type=str,
@@ -171,7 +173,7 @@ if __name__ == '__main__':
 		RX.Serial = AshtechSerial(RX.Globals.opts['serport'],
 			RX.Globals.opts['baud'],RX.Globals.opts['hwport'],verbose)
 		time.sleep(1)
-		RX.Commands = AshtechCommands(RX.Serial,verbose)
+		RX.Commands = AshtechCommands(RX.Serial,RX.Globals,verbose)
 		RX.RINEX = Rinex(RX.Commands,RX.Globals,verbose)
 		RX.Messages = AshtechMessages(RX.Serial,RX.Commands,
 			RX.Globals,RX.RINEX,verbose)
