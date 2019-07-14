@@ -23,4 +23,8 @@
 #	The lat/long/height conversion routines are borrowed from:
 #	https://gist.github.com/govert/1b373696c9a27ff4c72a
 #	https://gist.github.com/sbarratt/a72bede917b482826192bf34f9ff5d0b
+#
+#	The routines in ashgrid.py are borrowed from Walter Underwood K6WRU 
+#	in a Stack Overflow posting: https://tinyurl.com/yylktpvq
+#
 ################################################################################
