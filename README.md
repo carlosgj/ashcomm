@@ -23,7 +23,8 @@ processed to determine precise location and timing information.
 
 It is written in Python3 on a Linux platform.  It does not use any
 libraries or modules that are not part of a standard Python distribution,
-other than xmodem (install with "pip3 install xmodem") which is only
+other than xmodem, which is included in the distribution as xmodem.py,
+or which you can install with "pip3 install xmodem".  xmodem is only
 needed for working with the receiver's internal file storage.  I haven't 
 tried it, but there's no reason ashtech.py shouldn't run on a Windows
 system that has Python3 installed.
@@ -66,5 +67,5 @@ before doing any damage.
 The program writes a few lines of information to STDOUT and provides an
 ever-growing line of dots to show progress.  Setting the verbose option
 causes a bunch of debugging information to be printed to STDOUT, most of
-which is variable printouts that I used for debugging.
+which are variable printouts that I used for debugging.
 
