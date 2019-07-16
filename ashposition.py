@@ -21,7 +21,6 @@
 
 import math
 
-
 class Position:
     #    keylist = ['lat_float','lat_deg','lat_minute_float',
     #        'lat_minute','lat_second_float','lon_float','lon_deg',
@@ -102,7 +101,8 @@ class Position:
         return int(latdeg), int(latmin), latsec, \
             int(londeg), int(lonmin), lonsec, height
 
-    def ddmmssxxx_string_list(self, x_places=3, y_places=3, z_places=3, quad=True):
+    def ddmmssxxx_string_list(self, x_places=3, y_places=3, 
+            z_places=3, quad=True):
         (rawlat, rawlon, height) = self.ecef_to_wgs84(self.x, self.y, self.z)
         (latdeg, latmin, latsec) = self.decdeg_to_dms(rawlat)
         (londeg, lonmin, lonsec) = self.decdeg_to_dms(rawlon)
@@ -124,6 +124,54 @@ class Position:
                 lon = lon + 'W'
         return lat, lon, height
 
+
+###############################################################################
+#
+# From Walter Underwood K6WRU in a Stack Overflow posting:
+# https://tinyurl.com/yylktpvq
+# Convert latitude and longitude to Maidenhead grid locators.
+#
+# Arguments are in signed decimal latitude and longitude. For example,
+# the location of my QTH Palo Alto, CA is: 37.429167, -122.138056 or
+# in degrees, minutes, and seconds: 37° 24' 49" N 122° 6' 26" W
+
+
+    def grid_square(self):
+        upper = 'ABCDEFGHIJKLMNOPQRSTUVWX'
+        lower = 'abcdefghijklmnopqrstuvwx'
+
+        (lat, lon, height) = self.ecef_to_wgs84(self.x, self.y, self.z)
+
+        if not (-180 <= lon < 180):
+            sys.stderr.write(
+                'longitude must be -180<=lon<180, given %f\n' % lon)
+            sys.exit(32)
+        if not (-90 <= lat < 90):
+            sys.stderr.write('latitude must be -90<=lat<90, given %f\n' %
+                    lat)
+            sys.exit(33)  # can't handle north pole, sorry, [A-R]
+    
+        adj_lat = lat + 90.0
+        adj_lon = lon + 180.0
+
+        grid_lat_sq = str(upper[int(adj_lat/10)])
+        grid_lon_sq = str(upper[int(adj_lon/20)])
+        major = grid_lon_sq + grid_lat_sq
+
+        grid_lat_field = str(int(adj_lat % 10))
+        grid_lon_field = str(int((adj_lon/2) % 10))
+        num = grid_lon_field + grid_lat_field
+
+        adj_lat_num = (adj_lat - int(adj_lat)) * 60
+        adj_lon_num = ((adj_lon) - int(adj_lon/2)*2) * 60
+
+        grid_lat_subsq = str(lower[int(adj_lat_num/2.5)])
+        grid_lon_subsq = str(lower[int(adj_lon_num/5)])
+        subsq = grid_lon_subsq + grid_lat_subsq
+
+        fullgrid = major + num + subsq
+
+        return fullgrid
 
 ###############################################################################
 # This script provides coordinate transformations from Geodetic -> ECEF,

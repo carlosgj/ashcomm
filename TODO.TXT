@@ -1,12 +1,13 @@
 To-do list for ashcomm.py:
 
-1.  Add more error checking and validation; the problem is I don't know
+1.  Add more error checking and validation
+the problem is I don't know
 where that's needed.
 
 2.  Decode additional message types and generate more RINEX file types.
 
-3.  Make the GPS-week detection code more robust (relying on the DAL
-sentence isn't the best approach).
+3.  Make the GPS-week detection code more robust(relying on the DAL
+                                                 sentence isn't the best approach).
 
 4.  Support more receiver commands, like setting elevation mask.
 
@@ -14,12 +15,12 @@ sentence isn't the best approach).
 different filesystems so this will take a bit of work.  The "ashfile.py"
 file contains the work I've done on it so far.  It previously was able
 to download files from a Z12 but with all the changes I've made to the
-supporting code, the download function (via xmodem!) doesn't currently
+supporting code, the download function(via xmodem!) doesn't currently
 work.  Next step is to fix that.
 
 6.  In connection with that, Ashtech/Magellan published a program written
 in Perl called "remote33" that included a C++ program called "convert"
-that would read receiver output files and convert them to a format that 
+that would read receiver output files and convert them to a format that
 could then be converted to RINEX by the "teqc" software.  That is an
 awfully clunky process, so I want to combine everything into one program
 As a baby step, I've updated the "convert" program to compile on a modern

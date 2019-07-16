@@ -67,12 +67,12 @@ class AshtechError:
 ###############################################################################
     def stats(self):
         print()
-        print("Exiting program...")
+        string = "Exiting program..."
         if self.g.start_time:
             duration = datetime.datetime.utcnow() - self.g.start_time
-            print("Run time: {}".format((str(duration))[:-5], end=''))
+            string += " Run time: {}".format((str(duration))[:-5])
             if self.g.obs_epoch_count:
-                print("; wrote {} epochs to {}".format(
-                    self.g.obs_epoch_count, self.g.obs_filename))
-            else:
-                print()
+                string += "; wrote {} epochs to {}".format(
+                    self.g.obs_epoch_count, self.g.obs_filename)
+        print(string)
+        print()

@@ -106,6 +106,23 @@ class GPS_Time:
         return seq_seconds
 
 ###############################################################################
+# modulo30min -- number of seconds this week to last 30 minute mark
+# this is to determine epoch time from mben_dict['seq'] value
+###############################################################################
+
+    def modulo30min(self, week, tow):
+
+        # divide tow by 1800 seconds (30 minutes) to
+        # get number of 30 minute chunks so far this week
+        (quotient, remainder) = divmod(tow, 1800)
+
+        # multiply 30 minutes of seconds by number of chunks
+        # to give us tow to prior 30 minute point
+        trunc_seconds = quotient * 1800
+
+        return seq_seconds
+
+###############################################################################
 # NOT IN GPS_Time class
 ###############################################################################
 # current_gps_time -- get current time from system clock

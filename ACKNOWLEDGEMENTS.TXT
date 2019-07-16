@@ -2,7 +2,7 @@
 #
 #	Concepts, algorithms, and a small bit of code shamelessly stolen from
 #	a number of other programs, including:
-#	
+#
 #	Lady Heather -- Mark Sims
 #	http://www.ke5fx.com/heather
 #	NOTE: As of July, 2019, Ashtech support is only in the beta version.
@@ -10,8 +10,8 @@
 #	remote33 -- published by Magellan Corporation/Ashtech Precision Products
 #	and downloaded from
 #	https://kb.unavco.org/kb/article/remote33-374.html
-#	NOTE: remote33 is written in a very early version of Perl and needs 
-#	updating to run on current machines.  That's largely why I wrote 
+#	NOTE: remote33 is written in a very early version of Perl and needs
+#	updating to run on current machines.  That's largely why I wrote
 #	this program.
 #
 #	sharc -- by Keith Stark and downloaded from
@@ -24,7 +24,7 @@
 #	https://gist.github.com/govert/1b373696c9a27ff4c72a
 #	https://gist.github.com/sbarratt/a72bede917b482826192bf34f9ff5d0b
 #
-#	The routines in ashgrid.py are borrowed from Walter Underwood K6WRU 
+#	The routines in ashgrid.py are borrowed from Walter Underwood K6WRU
 #	in a Stack Overflow posting: https://tinyurl.com/yylktpvq
 #
 ################################################################################

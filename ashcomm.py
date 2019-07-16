@@ -42,6 +42,7 @@ from asherror import *
 def main():
     g = AshtechGlobals()
     option = AshtechOpts(g)
+
     option.getargs()
     verbose = g.opts['verbose']
     if verbose:
@@ -59,28 +60,35 @@ def main():
     Messages = AshtechMessages(Serial, Commands,
                                g, RINEX, verbose)
 
+    print()
     Serial.Open()
 
-    Commands.SetCommand("OUT,A", verbose=0)  # turn off output
-    Serial.reset_input()						# clean the sluices
+    Commands.SetCommand("OUT,A", verbose=0)     # turn off output
+    Serial.reset_input()                        # clean the sluices
     Serial.reset_output()
     time.sleep(1)
 
     Commands.QueryRID(verbose=True)
+    print()
 
-#	GetZ12Files()
+#   GetZ12Files()
 
     g.start_time = datetime.datetime.utcnow()
     RINEX.create_rinex_obs_file()
-
-    print("Waiting for data; it may take a while...")
+    print()
 
     gps_week = Messages.GetGPSWeek(verbose)
     time.sleep(1)
 
     # set message rate
-    Commands.SetCommand("RCI," + str(g.opts['msg_rate']))
+    msg_rate = str(g.opts['msg_rate'])
+    print("Setting message rate to", msg_rate, "seconds")
+    Commands.SetCommand("RCI," + msg_rate)
     time.sleep(1)
+
+    print("Waiting for data; it may take a while...")
+    print()
+
     Commands.SetCommand("OUT,A,PBN,MBN,BIN", verbose)
     time.sleep(1)
     Messages.MsgSwitch(verbose)

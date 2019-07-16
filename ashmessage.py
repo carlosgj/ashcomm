@@ -30,8 +30,8 @@ from ashglobal import *
 
 class AshtechMessages:
 
-    ###############################################################################
-    ###############################################################################
+###############################################################################
+###############################################################################
     def __init__(self, serport, commands, structs, rinex, verbose):
         self.SerPort = serport
         self.Commands = commands
@@ -89,32 +89,39 @@ class AshtechMessages:
                 else:
                     print("Message type", msg_type, "is unknown!")
 
-            # send an epoch stanza to RINEX output only if
-            # mben_list_full avoids processing during the
-            # multi-message mben stream; comparing epochs makes
-            # sure the mben and pben messages are in sync (for
-            # each epoch, mben messages arrive first, followed by
-            # the pben message. Checking that the mben and pben
-            # messages have the same epoch avoids mismatching
-            # RINEX headers and data. The checks for "got_first" are
-            # to avoid attribute errors if the time objects are
-            # empty.
-            if (
-                    self.g.mben_list_full and
-                    self.g.got_first_mben and
-                    self.g.got_first_pben and
-                    self.g.current_mben_epoch.timestring() ==
-                self.g.current_pben_epoch.timestring()
-            ):
+            # test whether we're ready to print a RINEX epoch
+            # mben_list_full means we have all the SV data for an epoch
+            if self.g.mben_list_full:
+                # new_pben means we have a pben message
+                if self.g.new_pben:
+                    # but it might have prior epoch
+                    if (self.g.current_mben_epoch_string !=
+                            self.g.current_pben_epoch_string):
+                        # so ignore it
+                        self.g.new_pben = False
+                        if verbose:
+                            print(str(datetime.datetime.utcnow().time())[:-5],
+                                  "epoch mismatch!",
+                                  "mben:", self.g.current_mben_epoch_string,
+                                  "pben:", self.g.current_pben_epoch_string)
+                        continue
+                    else:
 
-                if verbose:
-                    print("Off to RINEX...")
-                self.RINEX.write_rinex_obs()
-                # clear the mben list
-                self.g.mben_list = [None] * 33  # 1 - 32
-                self.g.mben_list_full = False
-                # clear tow since it's now in the past
-                self.g.gps_tow = 0
+                        if verbose:
+                            print(str(datetime.datetime.utcnow().time())[:-5],
+                                  "mben:", self.g.current_mben_epoch_string,
+                                  "pben:", self.g.current_pben_epoch_string)
+                            print("Off to RINEX...")
+
+                        self.RINEX.write_rinex_obs()
+
+                        # we're done with mben, so
+                        # clear for another cycle
+                        self.g.mben_list_full = False
+                        self.g.mben_list = [None] * 33  # 1 - 32
+
+                # we never reuse pben
+                self.g.new_pben = False
 
         return
 
@@ -154,10 +161,12 @@ class AshtechMessages:
         seq = int(mben_dict['seq'])
         # get current gps time (set by pben)
         temp = GPS_Time(self.g.gps_week, self.g.gps_tow)
-        seq_seconds = temp.time_from_seq(self.g.gps_week,
-                                         self.g.gps_tow, seq)
-        epoch = GPS_Time(self.g.gps_week, seq_seconds)
-        self.g.current_mben_epoch = epoch
+        # use that plus seq to get epoch tow
+        seq_seconds = temp.time_from_seq(self.g.gps_week, self.g.gps_tow, seq)
+        # turn tow and gps_week into epoch time
+        self.g.current_mben_epoch = GPS_Time(self.g.gps_week, seq_seconds)
+        self.g.current_mben_epoch_string = \
+            GPS_Time(self.g.gps_week, seq_seconds).timestring()
 
         # convert values (formulas from Lady Heather -- thanks, Mark!)
         mben_dict['az'] = mben_dict['az'] * 2
@@ -226,7 +235,7 @@ class AshtechMessages:
         self.g.mben_list[prn] = mben_dict
         self.g.mben_flag_list[prn] = mben_flag_dict
 
-        if 1 == 0:
+        if verbose:
             print()
             print("Epoch:", epoch)
             mbn = "MBN" + str(mben_dict['struct_left'])
@@ -250,7 +259,8 @@ class AshtechMessages:
                 print()
 
         if mben_dict['struct_left'] == 0:  # last message for this epoch
-            self.g.got_first_mben = True
+            if verbose:
+                print("setting mben_list_full")
             self.g.mben_list_full = True
 
         return
@@ -262,7 +272,7 @@ class AshtechMessages:
     def parse_pben(self, message, verbose=False):
 
         # only get pben after we've received the first mben
-        if not self.g.got_first_mben:
+        if not self.g.current_mben_epoch_string:
             return
 
         if verbose:
@@ -294,16 +304,15 @@ class AshtechMessages:
         self.g.current_pben_epoch = \
             GPS_Time(self.g.gps_week, self.g.gps_tow)
 
-        self.g.current_epoch_string = \
+        self.g.current_pben_epoch_string = \
             GPS_Time(self.g.gps_week, self.g.gps_tow).timestring()
 
-        if not self.g.got_first_pben:
-            self.g.first_observation = \
-                self.g.current_pben_epoch
-            self.g.first_observation_string = \
-                self.g.current_epoch_string
+        if not self.g.first_observation_string:
+            self.g.first_observation = self.g.current_pben_epoch
+            self.g.first_observation_string = self.g.current_pben_epoch_string
 
-        self.g.got_first_pben = True
+        # set flag for MsgSwitch
+        self.g.new_pben = True
 
         if verbose:
             #			print("navx,navy,navz:",navx,navy,navz)

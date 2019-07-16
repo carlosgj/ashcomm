@@ -26,7 +26,7 @@
 ./ashcomm.py \
 --serport=/dev/ttyS4 \
 --baud=115200 \
---msg_rate=30 \
+--msg_rate=10 \
 --site=N8UR \
 --operator='John Ackermann' \
 --marker=DECK \

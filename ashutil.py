@@ -235,7 +235,7 @@ def Human_Bytes(i, binary=False, precision=2):
     multiple = math.trunc(math.log2(i) / math.log2(base))
     value = i / math.pow(base, multiple)
     suffix = MULTIPLES[multiple].format("i" if binary else "")
-    result =  f"{value:.{precision}f}{suffix}"
+    result = f"{value:.{precision}f}{suffix}"
     return result
 
 # end of ashutil.py

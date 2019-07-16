@@ -126,11 +126,11 @@ class AshtechGlobals:
     mben_dict = dict.fromkeys(mben_keys, None)
     mben_flag_dict = dict.fromkeys(mben_flag_keys, None)
 
-    mben_list = [None] * 33		# current observables; index = PRN (1-32)
-    mben_flag_list = [None] * 33		# current observables; index = PRN
-
-    got_first_mben = False		# did we get the first epoch?
-    mben_list_full = False		# keep track of messages per epoch
+    mben_list = [None] * 33         # current observables; index = PRN (1-32)
+    mben_flag_list = [None] * 33    # current observables; index = PRN
+    mben_list_full = False          # keep track of messages per epoch
+    current_mben_epoch = GPS_Time(0, 0)  # set in parse_mben()
+    current_mben_epoch_string = ""
 
 ###############################################################################
 # pben is "navigation" message which includes time of week, llh, vlvlvh,
@@ -141,26 +141,23 @@ class AshtechGlobals:
     pben_keys = ['tow', 'site', 'navx', 'navy', 'navz', 'offset',
                  'velx', 'vely', 'velz', 'drift', 'pdop']
 
-    got_first_pben = False						# did we get the first epoch?
     current_pben = dict.fromkeys(pben_keys, None)  # make empty dict
-    current_fix = [None]						#
+    new_pben = False        # toggles in MsgSwitch
+    current_pben_epoch = GPS_Time(0, 0)  # set in parse_pben()
+    current_pben_epoch_string = ""  # set in parse_pben()
+    current_fix = [None]
 
     # this contains all the data for one epoch
     epoch_data = [mben_list, current_pben]
 
 ###############################################################################
 # time stuff
-    first_observation = GPS_Time(0, 0).timelist  # set in parse_pben()
-    first_observation_string = ""				# set in parse_pben()
-
-    current_epoch = GPS_Time(0, 0).timelist		# set in parse_pben()
-
-    current_mben_epoch = GPS_Time(0, 0).timelist  # set in parse_mben()
-    current_pben_epoch = GPS_Time(0, 0).timelist  # set in parse_pben()
+    first_observation = GPS_Time(0, 0)     # set in parse_pben()
+    first_observation_string = ""  # set in parse_pben()
 
     # these have to be available in the exit hanlder. how???
-    start_time = None							# set in main()
-    obs_epoch_count = 0							# set in write_obs_epoch()
+    start_time = None			# set in main()
+    obs_epoch_count = 0	        	# set in write_obs_epoch()
 
     # for convenience, week and current tow are kept in separate variables
     gps_week = 0		# set in get_gps_week()

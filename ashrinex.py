@@ -51,14 +51,14 @@ class Rinex:
     def write_rinex_obs(self, verbose=False):
 
         if not self.g.wrote_rinex_obs_file_header:
-            string = "First Observation: " + \
-                     self.g.first_observation_string + \
-                ", measurements every " + \
-                     str(self.g.opts['msg_rate']) + " seconds"
-            print(string)
-            string = "Approximate Position: " + \
-                self.g.current_fix.ddmmxxx_string()
-            print(string)
+            print("First Observation: " +
+                     self.g.first_observation_string +
+                ", measurements every " +
+                     str(self.g.opts['msg_rate']) + " seconds")
+
+            print("Approximate Position: " +
+                self.g.current_fix.ddmmxxx_string() +
+                ", Grid:", self.g.current_fix.grid_square())
 
             self.obs_file_header()
             self.g.wrote_rinex_obs_file_header = True

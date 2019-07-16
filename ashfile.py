@@ -180,6 +180,7 @@ class AshtechFile:
 # GetZ12Files -- download files from Z12 memory
 ###############################################################################
 
+
     def GetZ12Files(self):
         # Assumes all files are the same 4-character sitename and
         # each represents a session number starting with 0
@@ -290,7 +291,6 @@ class AshtechFile:
 ###############################################################################
 if __name__ == '__main__':
     pass
-
 
     def main():
         RX = AshtechFile()
