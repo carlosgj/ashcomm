@@ -275,8 +275,6 @@ class AshtechMessages:
         if not self.g.current_mben_epoch_string:
             return
 
-        if verbose:
-            print("raw pben length:", len(message))
         # first, strip off checksum bytes and test
         chksum = message[-2:]
         message = message[:-2]
@@ -301,6 +299,13 @@ class AshtechMessages:
         self.g.current_fix = fix
 
         self.g.gps_tow = pben_dict['tow']
+
+        # have we entered a new week?
+        if pben_dict['tow'] < self.g.last_tow:
+            self.g.gps_week += 1
+            print("New GPS week: {}".format(self.gps_week))
+        self.g.last_tow = self.g.gps_tow
+
         self.g.current_pben_epoch = \
             GPS_Time(self.g.gps_week, self.g.gps_tow)
 

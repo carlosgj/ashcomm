@@ -162,6 +162,7 @@ class AshtechGlobals:
     # for convenience, week and current tow are kept in separate variables
     gps_week = 0		# set in get_gps_week()
     gps_tow = 0			# set by parse_pben()
+    last_tow = 0                # set by parse_pben()
 
 ###############################################################################
 # stuff for building RINEX files

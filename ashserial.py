@@ -219,6 +219,19 @@ class AshtechSerial:
         return message
 
 ###############################################################################
+# read_multiline -- read lines from serial port until nothing arrives
+# for timeout seconds, then return a list of lines read, on line per element
+###############################################################################
+    def read_multiline(self,timeout=3):
+        timer = time.time() + timeout
+        results = []
+        while (timer > time.time()):
+            results.append(self.read_line())
+           
+        return results
+
+
+###############################################################################
 # read_anything -- a more general read function.  It waits for anything on
 # input and depending on the params reads length bytes or reads until the
 # delimiter.  Delimiter must be a byte object.  Returns raw byte object

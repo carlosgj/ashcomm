@@ -94,11 +94,11 @@ class AshtechOpts:
         args.add_argument('--antenna_type', default='', type=str,
                           help='antenna type \(from WGS database\)')
 
-        args.add_argument('--antenna_height', default='', type=float,
+        args.add_argument('--antenna_height', default=0, type=float,
                           help='antenna elevation')
-        args.add_argument('--antenna_east', default='', type=float,
+        args.add_argument('--antenna_east', default=0, type=float,
                           help='antenna easting')
-        args.add_argument('--antenna_north', default='', type=float,
+        args.add_argument('--antenna_north', default=0, type=float,
                           help='antenna northing')
 
         self.g.opts = vars(args.parse_args())

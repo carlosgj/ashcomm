@@ -24,7 +24,7 @@
 #import serial
 #import io
 import struct
-#import math
+import math
 
 ###############################################################################
 # verify_chksum -- generate checksum from payload and compare to one or two

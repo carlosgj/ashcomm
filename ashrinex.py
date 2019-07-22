@@ -51,10 +51,8 @@ class Rinex:
     def write_rinex_obs(self, verbose=False):
 
         if not self.g.wrote_rinex_obs_file_header:
-            print("First Observation: " +
-                     self.g.first_observation_string +
-                ", measurements every " +
-                     str(self.g.opts['msg_rate']) + " seconds")
+            print("First Observation: {} (GPS week: {})".format(
+                self.g.first_observation_string, self.g.gps_week))
 
             print("Approximate Position: " +
                 self.g.current_fix.ddmmxxx_string() +

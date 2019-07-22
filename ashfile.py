@@ -19,8 +19,8 @@
 #############################   ashfile.py    ##################################
 
 import time
-import struct
-import argparse
+import signal
+import datetime
 
 from ashserial import *
 from ashcommand import *
@@ -30,6 +30,8 @@ from ashposition import *
 from ashtime import *
 from ashrinex import *
 from ashglobal import *
+from ashopt import *
+from asherror import *
 
 # available from pip, but copy provided with this program
 from xmodem import XMODEM, XMODEM1k, NAK
@@ -47,9 +49,19 @@ logging.basicConfig(level=logging.ERROR)
 
 class AshtechFile:
 
-    ###############################################################################
-    # ComposeRFileName -- build filename for downloaded file
-    ###############################################################################
+    def __init__(self, serport, commands,g, verbose):
+        self.Serial = serport
+        self.Commands = commands
+        self.g = g
+        self.verbose = verbose
+
+
+###############################################################################
+# Z12 download routines
+###############################################################################
+###############################################################################
+# ComposeRFileName -- build filename for downloaded file
+###############################################################################
     def ComposeRFileName(self, SiteName, SessNum, SegWn, SegTime):
 
         timestring = self.GpsToNormalTime(SegWn, SegTime)
@@ -232,10 +244,10 @@ class AshtechFile:
              d13, d14, d15, d16, d17, d18, d19,
              d20, d21, d22, d23) = FileHdr
 
-            SegName = SegName.decode('UTF-8')
-            Tmp2 = Tmp2.decode('UTF-8')
-            SessName = SessName.decode('UTF-8')
-            Project = Project.decode('UTF-8')
+            SegName = SegName.decode('ascii')
+            Tmp2 = Tmp2.decode('ascii')
+            SessName = SessName.decode('ascii')
+            Project = Project.decode('ascii')
 
             if (WordCount > 0):   # don't download zero sized file
                 # Generate filename
@@ -258,67 +270,153 @@ class AshtechFile:
             return()
 
 ###############################################################################
-# getargs -- get command line arguments and supply defaults
+# uZ download routines
 ###############################################################################
-    def getargs(self):
-        args = argparse.ArgumentParser()
+############################################################################
+# From REMOTE33:
+#
+# Subroutine:  GetFilesListuZ
+#
+# Description: This subroutine obtains the list of the recorded files using
+#              the query $PASHQ,FIF,<n> where n is the index of the first
+#              file.
+#              Each $PASHR,FIF can contain information for up to 10 files.
+#              Format of the $PASHR,FIF is the following
+#              $PASHR,FIF,<SpaceLeft>,<TotalFiles>,<FilesInThisMessage>,\
+#              [<FileIdx>,<FileName>,<FileDate>,<FileSize>] - this group
+#              is repeated <FilesInThisMessage> times
+#
+# Parameters:  None
+#
+############################################################################
 
-        def str2bool(v):
-            if isinstance(v, bool):
-                return v
-            if v.lower() in ('yes', 'true', 't', 'y', '1'):
-                return True
-            elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-                return False
-            else:
-                raise argparse.ArgumentTypeError('Boolean value expected.')
+    def GetFilesListuZ(self):
 
-        # setup options with defaults
-        args.add_argument('-v', '--verbose', default='False', type=str2bool,
-                          nargs='?', const=True, help='be verbose')
+        # FLS command takes lowest index number to return
+        # but if you specify higher than actual, bombs out
+        # so, start with 0 and learn the actual total in the
+        # first response
+        total_files = "0"
+        self.Commands.QueryCommand("FLS," + total_files)
+        time.sleep(0.1)
+        response = self.Serial.read_line()
+        fields = response.split(b',')
 
-        args.add_argument('-s', '--serport', default='/dev/ttyS4', type=str,
-                          help='host computer serial port')
-        args.add_argument('-b', '--baud', default=115200, type=int,
-                          help='baud rate')
-        args.add_argument('-p', '--hwport', default='A', type=str,
-                          help='receiver hardware port')
+        # get and strip off the preamble fields
+        (null,kb_left,total_sessions,sessions_follow) = fields[:4]
+        kb_left = int(kb_left)
+        total_sessions = int(total_sessions)
+        sessions_follow = int(sessions_follow)
+        print("{} left, {} total sessions, {} sessions follow:".format(
+            Human_Bytes(kb_left * 1024), total_sessions, sessions_follow))
+        fields = fields[4:]
 
-        self.g.opts = vars(args.parse_args())
+        # each session has 3 fields: site, time, size
+        # time field needs to be split: first 4 digits are
+        # GPS week, which needs fixing due to rollover;
+        # next field is day of week; last field is HH:MM
+        n = 0
+        session_list = []
+        while n < sessions_follow:
+            site = fields[0].decode('ascii')
+            week = int(fields[1][:4])
+            week = str(fix_rollover(week))
+            remainder = fields[1][4:].decode('ascii')
+            date = week + remainder
+            size = fields[2]
+            # remove checksum from last entry
+            if b'*' in size:
+                (size,_) = size.split(b'*')
 
+            size = int(size)
+            print("site: {} date: {} size: {}".format(site, date,
+                Human_Bytes(size * 1024)))
+            fields = fields[3:]
+            session_list.append(fields)
+            n += 1
+        return session_list
 
+############################################################################
+# From REMOTE33:
+#
+# Subroutine:  DownloadFilesuZ
+#
+# Description: This subroutines uses the utility rz to download receiver U
+#              files via ZMODEM.
+#              The recieiver initiates the transfer upon receiving command:
+#              $PASHS,FIL,DOWNLOAD,<file name>,ZMODEM   
+#
+# Parameters:  None
+#
+############################################################################
+
+    def DownloadFileuZ(self, session_id):
+
+        modem = XMODEM(self.Serial.getc, self.Serial.putc)
+        print( self.Commands.QueryRespond("DOWNLOAD," + str(session_id)
+            + "XMODEM"))
+
+        download_bytes = 0
+        t1_start = time.perf_counter()
+        download_bytes = modem.recv(filebuf, crc_mode=1)
+        t1_stop = time.perf_counter()
+        elapsed = t1_stop - t1_start
+        bytes_per_sec = downloadbytes / elapsed
+        print("Received %s in %f.0 seconds: (%f.0 bytes/sec)" %
+              (self.Human_Bytes(download_bytes),
+               elapsed, bytes_per_sec))
+
+        filebuf.close
+        self.serial.timeout = self.TIMEOUT
+
+        return download_bytes
+
+###############################################################################
 # MAIN PROGRAM
 ###############################################################################
+
+# NOTE: temporarily hardwired for file processing only; most command-
+# line params are ignored
+
+def main():
+    g = AshtechGlobals()
+    option = AshtechOpts(g)
+
+    option.getargs()
+    verbose = g.opts['verbose']
+    if verbose:
+        print("Verbose mode")
+
+    # store the original SIGINT handler
+    original_sigint = signal.getsignal(signal.SIGINT)
+    error = AshtechError(original_sigint, g)
+    signal.signal(signal.SIGINT, error.exit_handler)
+
+    Serial = AshtechSerial(g.opts['serport'],
+                           g.opts['baud'], g.opts['hwport'], verbose)
+    Commands = AshtechCommands(Serial, g, verbose)
+    ZFile = AshtechFile(Serial, Commands, g, verbose)
+
+    print()
+    Serial.Open()
+
+    Commands.SetCommand("OUT,A", verbose=0)     # turn off output
+    Serial.reset_input()                        # clean the sluices
+    Serial.reset_output()
+    time.sleep(1)
+
+    Commands.QueryRID(verbose=True)
+    print()
+    g.start_time = datetime.datetime.utcnow()
+
+    time.sleep(1)
+    ZFile.GetFilesListuZ()
+    time.sleep(1)
+    ZFile.DownloadFileuZ(1)
+
+    time.sleep(1)
+    Serial.Close()
+
+
 if __name__ == '__main__':
-    pass
-
-    def main():
-        RX = AshtechFile()
-        RX.g = AshtechGlobals()
-        RX.getargs()
-        verbose = RX.g.opts['verbose']
-        if verbose:
-            print("Verbose mode")
-
-        RX.Serial = AshtechSerial(RX.g.opts['serport'],
-                                  RX.g.opts['baud'], RX.g.opts['hwport'], verbose)
-        RX.Commands = AshtechCommands(RX.Serial, verbose)
-
-        RX.Serial.Open()
-        time.sleep(1)
-        RX.Commands.QueryRID(verbose=True)
-
-        # shut off streaming output
-        RX.Commands.SetCommand("OUT,A")
-        time.sleep(1)
-        RX.Serial.reset_output()
-        RX.Serial.flush()
-        RX.Commands.QueryRID(verbose=True)
-        time.sleep(1)
-
-        RX.GetZ12Files()
-        time.sleep(1)
-
-        RX.Serial.Close()
-
     main()

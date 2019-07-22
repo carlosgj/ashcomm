@@ -31,8 +31,8 @@ from ashtime import *
 
 class AshtechCommands:
 
-    ###############################################################################
-    ###############################################################################
+###############################################################################
+###############################################################################
     def __init__(self, serport, g, verbose):
         self.SerPort = serport
         self.g = g
@@ -137,8 +137,11 @@ class AshtechCommands:
             date = self.SerPort.read_line()
             ser_num = self.SerPort.read_line()
             ser_num = ser_num.decode('ascii')
-            response.append(ser_num)
-            self.g.rx_ser_num = ser_num
+        else:
+            date = ""
+            ser_num = 0
+        response.append(ser_num)
+        self.g.rx_ser_num = ser_num
 
         if verbose:
             # fields: 0 = rx type, 1 = channel option, 2 = nav version,
