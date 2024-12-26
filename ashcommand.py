@@ -52,7 +52,9 @@ class AshtechCommands:
 # QueryCommand -- send $PASHQ query command to Z12; don't wait for response
 ###############################################################################
     def QueryCommand(self, command, verbose=False):
-        command_string_bytes = b"$PASHQ," + bytes(command, 'ascii') + b"\r\n"
+        if not isinstance(command, bytes):
+            command = bytes(command, 'ascii')
+        command_string_bytes = b"$PASHQ," + command + b"\r\n"
         if verbose:
             print("QueryCommand sent: ", command_string_bytes)
         self.SerPort.write(command_string_bytes)

@@ -38,7 +38,7 @@ from xmodem import XMODEM, XMODEM1k, NAK
 
 # to avoid xmodem logging messages
 import logging
-logging.basicConfig(level=logging.ERROR)
+#logging.basicConfig(level=logging.ERROR)
 
 ###############################################################################
 ###############################################################################
@@ -63,8 +63,8 @@ class AshtechFile:
 # ComposeRFileName -- build filename for downloaded file
 ###############################################################################
     def ComposeRFileName(self, SiteName, SessNum, SegWn, SegTime):
-
-        timestring = self.GpsToNormalTime(SegWn, SegTime)
+        t = GPS_Time(SegWn, SegTime)
+        timestring = t.gpstime
         (sec, minute, hour, mday, mon, year, wday, yday) = timestring.split(",")
 
         str(SiteName).translate(str.maketrans(
@@ -88,7 +88,7 @@ class AshtechFile:
 ###############################################################################
     def BuildImageHeader(self):
 
-        RIDstring = self.Query("RID")
+        RIDstring = self.rid
         # trim first and last elements of list,
         # convert to comma-delimited string
         RIDstring = ",".join(RIDstring[1:-1])
@@ -156,20 +156,20 @@ class AshtechFile:
 # DownloadZ12File -- download file image from Z12
 ###############################################################################
     def DownloadZ12File(self, RFileName, SegBeg, WordCount, CombinedFileHeader):
-
         filelen = WordCount * 2
         headerlen = len(CombinedFileHeader)
         totallen = headerlen + filelen
         filebuf = open(RFileName, 'wb')
         filebuf.write(bytearray(CombinedFileHeader))
 
-        modem = XMODEM1k(self.getc, self.putc)
+        modem = XMODEM1k(self.Serial.getc, self.Serial.putc)
+        self.Serial.serial.read(1000)
         QueryString = str.encode("$PASHQ,BLK,%X,%X\n\r" % (SegBeg, filelen))
-        self.serial.timeout = 0
+        self.Serial.serial.timeout = 2
 
         print("Requesting download of %s (%s)" %
-              (RFileName, self.Human_Bytes(filelen)))
-        self.serial.write(QueryString)
+              (RFileName, Human_Bytes(filelen)))
+        self.Serial.serial.write(QueryString)
         time.sleep(1)
 
         download_bytes = 0
@@ -177,13 +177,13 @@ class AshtechFile:
         download_bytes = modem.recv(filebuf, crc_mode=1)
         t1_stop = time.perf_counter()
         elapsed = t1_stop - t1_start
-        bytes_per_sec = downloadbytes / elapsed
+        bytes_per_sec = download_bytes / elapsed
         print("Received %s in %f.0 seconds: (%f.0 bytes/sec)" %
-              (self.Human_Bytes(download_bytes),
+              (Human_Bytes(download_bytes),
                elapsed, bytes_per_sec))
 
-        filebuf.close
-        self.serial.timeout = self.TIMEOUT
+        filebuf.close()
+        #self.serial.timeout = self.TIMEOUT
 
         return download_bytes
 
@@ -197,7 +197,7 @@ class AshtechFile:
         # Assumes all files are the same 4-character sitename and
         # each represents a session number starting with 0
 
-        MaxFileNumbers = 100  # For some versions of Z-12 it's 10
+        MaxFileNumbers = 10 # For some versions of Z-12 it's 10
 
         FatInfoFile = "fatinfo.dat"
         MemInfoSize = 10
@@ -205,16 +205,16 @@ class AshtechFile:
         FatInfoSize = MemInfoSize + FileInfoSize * MaxFileNumbers
 
         modem = XMODEM1k(self.Serial.getc, self.Serial.putc)
-        self.Serial.timeout = 0
+        self.Serial.serial.timeout = 2
         # Download FAT to buffer
         Query = b"BLK,%X,%X" % (0, FatInfoSize*2)
         self.Commands.QueryCommand(Query, verbose=True)
-        time.sleep(1)
+        time.sleep(2)
 
         print("Requesting FAT Download...")
         mybuf = open('data', 'wb')
-        print("Bytes received: ", modem.recv(mybuf))
-        mybuf.close
+        print("Bytes received: ", modem.recv(mybuf, crc_mode=1, retry=2))
+        mybuf.close()
 
         # Now read and process FAT
         mybuf = open('data', "rb")
@@ -236,7 +236,7 @@ class AshtechFile:
         # Now loop through the files downloading each, creating header,
         # and saving combination to disk
         for i in range(0, FilesFound):
-            FileHeader = buffer.read(FileInfoSize*2)  # FileHeader is 80 bytes
+            FileHeader = mybuf.read(FileInfoSize*2)  # FileHeader is 80 bytes
             FileHdr = struct.unpack(FileHdrStruct, FileHeader)
             (SegBeg, WordCount, SegName, RangerMode, Tmp,
              FileStartWn, FileStartTime, RcvrType, Tmp2,
@@ -266,8 +266,8 @@ class AshtechFile:
                 self.DownloadZ12File(RFileName, SegBeg, WordCount,
                                      CombinedFileHeader)
 
-            buffer.close
-            return()
+        mybuf.close()
+        return()
 
 ###############################################################################
 # uZ download routines
@@ -351,7 +351,6 @@ class AshtechFile:
 ############################################################################
 
     def DownloadFileuZ(self, session_id):
-
         modem = XMODEM(self.Serial.getc, self.Serial.putc)
         print( self.Commands.QueryRespond("DOWNLOAD," + str(session_id)
             + "XMODEM"))
@@ -405,18 +404,16 @@ def main():
     Serial.reset_output()
     time.sleep(1)
 
-    Commands.QueryRID(verbose=True)
+    ZFile.rid = Commands.QueryRID(verbose=True)
     print()
     g.start_time = datetime.datetime.utcnow()
 
     time.sleep(1)
-    ZFile.GetFilesListuZ()
-    time.sleep(1)
-    ZFile.DownloadFileuZ(1)
+    ZFile.GetZ12Files()
 
-    time.sleep(1)
     Serial.Close()
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     main()
